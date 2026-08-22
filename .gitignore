@@ -1,0 +1,48 @@
+# Compiled classes
+panel/out/
+panel/out-test/
+panel/target/
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# Runtime / data (user-specific)
+panel/logs/
+backups/
+panel.properties
+
+# Bundled JRE (too large for git, users download separately or cook.bat bundles)
+/java/
+
+# Release output
+CraftStation-Release/
+/CraftStation.exe
+
+# Build artifacts
+panel/sources.txt
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Server files (not part of CraftStation)
+*.jar
+!panel/lib/flatlaf-3.5.4.jar
+server.properties
+spigot.yml
+bukkit.yml
+purpur.yml
+eula.txt
+world/
+world_nether/
+world_the_end/
+plugins/
+logs/
+cache/
+versions/
+libraries/
+server-icon.png
+server-icon-original-*.png
