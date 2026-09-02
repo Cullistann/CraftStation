@@ -68,8 +68,6 @@
                     <source>25</source>
                     <target>25</target>
                     <compilerArgs>
-                        <arg>--enable-preview</arg>
-                        <!-- Java 25 new features -->
                         <arg>-Xlint:all</arg>
                         <arg>-Xlint:-processing</arg>
                     </compilerArgs>
@@ -119,9 +117,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.0</version>
-                <configuration>
-                    <argLine>--enable-preview</argLine>
-                </configuration>
             </plugin>
 
             <!-- Code coverage -->
@@ -157,9 +152,6 @@
                     <mainClass>Main</mainClass>
                     <icon>src/main/resources/icons/app.ico</icon>
                     <destination>${project.build.directory}/dist</destination>
-                    <javaOptions>
-                        <option>--enable-preview</option>
-                    </javaOptions>
                 </configuration>
             </plugin>
         </plugins>
@@ -184,7 +176,6 @@
                         <artifactId>maven-compiler-plugin</artifactId>
                         <configuration>
                             <compilerArgs>
-                                <arg>--enable-preview</arg>
                                 <arg>-O2</arg>
                             </compilerArgs>
                         </configuration>

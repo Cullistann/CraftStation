@@ -320,6 +320,111 @@ public class BackupSystemTest {
         }
     }
 
+    /**
+     * Test 7: TAR backup creation and restoration.
+     */
+    @Test
+    @Order(7)
+    @DisplayName("Test TAR backup creation and restoration")
+    void testTarBackupAndRestore() throws IOException {
+        System.out.println("\n=== Test 7: TAR Backup and Restore ===");
+
+        IBackupStrategy.BackupEntry backupEntry = backupManager.createBackup("TAR");
+        Assertions.assertNotNull(backupEntry, "TAR backup entry should not be null");
+        Assertions.assertTrue(backupEntry.fileName().contains(".csbak"), "TAR backup should have .csbak extension");
+
+        Path backupPath = Paths.get(testBackupDir, backupEntry.fileName());
+        Assertions.assertTrue(Files.exists(backupPath), "TAR backup file should exist");
+
+        modifyTestFiles();
+
+        backupManager.restoreBackup(backupEntry);
+        Assertions.assertTrue(verifyTestFilesRestored(), "Files should be restored correctly from TAR backup");
+        System.out.println("TAR backup and restore verified successfully: YES");
+    }
+
+    /**
+     * Test 8: TAR stream alignment with zero padding on file shrinkage.
+     */
+    @Test
+    @Order(8)
+    @DisplayName("Test TAR stream alignment with zero padding on file shrinkage")
+    void testTarBackupStreamAlignmentOnShrinkage() throws IOException {
+        System.out.println("\n=== Test 8: TAR Stream Alignment on File Shrinkage ===");
+
+        Path shrinkFile = Paths.get(testServerDir, "shrink.txt");
+        byte[] shrinkData = new byte[4096];
+        Arrays.fill(shrinkData, (byte) 'A');
+        Files.write(shrinkFile, shrinkData);
+
+        Path secondFile = Paths.get(testServerDir, "second.txt");
+        String secondFileContent = "Second file content that must remain intact";
+        Files.writeString(secondFile, secondFileContent);
+
+        TarBackupStrategy shrinkTarStrategy = new TarBackupStrategy() {
+            @Override
+            InputStream openInputStream(Path file) throws IOException {
+                if (file.equals(shrinkFile)) {
+                    // Simulate file shrinking on disk during backup (only 1024 bytes available instead of 4096)
+                    return new ByteArrayInputStream(shrinkData, 0, 1024);
+                }
+                return super.openInputStream(file);
+            }
+        };
+
+        Path tarPath = Paths.get(testBackupDir, "test_shrink.csbak");
+        Files.createDirectories(Paths.get(testBackupDir));
+
+        List<Path> files = List.of(shrinkFile, secondFile);
+        try (OutputStream os = Files.newOutputStream(tarPath)) {
+            shrinkTarStrategy.createTarArchive(testServerDir, files, os);
+        }
+
+        Path restoreDir = Paths.get(testServerDir, "restored_shrink");
+        Files.createDirectories(restoreDir);
+
+        Assertions.assertDoesNotThrow(() -> shrinkTarStrategy.extractTarArchive(tarPath, restoreDir),
+                "Extracting TAR archive with shrunk file should not throw EOFException");
+
+        Path restoredSecond = restoreDir.resolve("second.txt");
+        Assertions.assertTrue(Files.exists(restoredSecond), "Second file must exist after restore");
+        Assertions.assertEquals(secondFileContent, Files.readString(restoredSecond),
+                "Second file content must not be corrupted despite prior file shrinkage");
+
+        Path restoredShrink = restoreDir.resolve("shrink.txt");
+        Assertions.assertTrue(Files.exists(restoredShrink), "Shrunk file must exist after restore");
+        Assertions.assertEquals(4096, Files.size(restoredShrink),
+                "Shrunk file must be padded to declared header size to maintain archive structure");
+        System.out.println("TAR stream padding on file shrinkage verified successfully: YES");
+    }
+
+    /**
+     * Test 9: ServerManager command sanitization.
+     */
+    @Test
+    @Order(9)
+    @DisplayName("Test ServerManager command sanitization")
+    void testServerManagerCommandSanitization() {
+        System.out.println("\n=== Test 9: ServerManager Command Sanitization ===");
+
+        Assertions.assertNull(ServerManager.sanitizeCommand(null), "Null command should return null");
+        Assertions.assertNull(ServerManager.sanitizeCommand(""), "Empty command should return null");
+        Assertions.assertNull(ServerManager.sanitizeCommand("   "), "Whitespace-only command should return null");
+        Assertions.assertNull(ServerManager.sanitizeCommand(" \r\n\t "), "Newline-only command should return null");
+
+        Assertions.assertEquals("stop", ServerManager.sanitizeCommand("stop"));
+        Assertions.assertEquals("kick Notch", ServerManager.sanitizeCommand("  kick Notch  "));
+        Assertions.assertEquals("kick Notch Reason", ServerManager.sanitizeCommand("kick Notch Reason\r\n"));
+        Assertions.assertEquals("kick BadUser op Hacker",
+                ServerManager.sanitizeCommand("kick BadUser\nop Hacker"),
+                "Newline injection should be sanitized into a single line space");
+        Assertions.assertEquals("kick BadUser op Hacker stop",
+                ServerManager.sanitizeCommand("kick BadUser\r\nop Hacker\rstop\n"),
+                "Carriage return and newline sequences should be collapsed into single spaces");
+
+        System.out.println("ServerManager command sanitization verified successfully: YES");
+    }
+
     // Helper methods
 
     private void createTestFiles() throws IOException {

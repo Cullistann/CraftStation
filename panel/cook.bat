@@ -23,7 +23,7 @@ for /r src\main\java %%f in (*.java) do (
     endlocal
 )
 
-"%JAVA_HOME%\bin\javac" -cp "lib/*" -d out -sourcepath "src\main\java" --enable-preview --release 25 @sources.txt
+"%JAVA_HOME%\bin\javac" -cp "lib/*" -d out -sourcepath "src\main\java" --release 25 @sources.txt
 set BUILD_RESULT=%ERRORLEVEL%
 del sources.txt 2>nul
 

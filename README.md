@@ -53,7 +53,7 @@ build.bat
 
 # Run (from the server directory)
 cd ..
-java\bin\javaw.exe --enable-preview -cp "panel\out;panel\lib\*" Main
+java\bin\javaw.exe -cp "panel\out;panel\lib\*" Main
 ```
 
 ### Creating a Release Package

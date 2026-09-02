@@ -15,7 +15,7 @@ $mainSources = Get-ChildItem -Path src/main/java -Filter *.java -Recurse | ForEa
 }
 $mainSources | Out-File -FilePath sources-main.txt -Encoding ascii
 
-& "..\java\bin\javac" -cp "lib/*" -d out -sourcepath "src/main/java" --enable-preview --release 25 @sources-main.txt
+& "..\java\bin\javac" -cp "lib/*" -d out -sourcepath "src/main/java" --release 25 @sources-main.txt
 
 Write-Host "Compiling test sources..."
 # Find test sources and wrap in double quotes
@@ -24,10 +24,10 @@ $testSources = Get-ChildItem -Path src/test/java -Filter *.java -Recurse | ForEa
 }
 $testSources | Out-File -FilePath sources-test.txt -Encoding ascii
 
-& "..\java\bin\javac" -cp "lib/*;out" -d out-test -sourcepath "src/test/java" --enable-preview --release 25 @sources-test.txt
+& "..\java\bin\javac" -cp "lib/*;out" -d out-test -sourcepath "src/test/java" --release 25 @sources-test.txt
 
 Write-Host "Running JUnit tests..."
-& "..\java\bin\java" --enable-preview -jar lib/junit-platform-console-standalone-1.11.0.jar --class-path "out;out-test" --scan-class-path
+& "..\java\bin\java" -jar lib/junit-platform-console-standalone-1.11.0.jar --class-path "out;out-test" --scan-class-path
 
 # Clean up temporary files
 if (Test-Path sources-main.txt) { Remove-Item sources-main.txt }

@@ -204,6 +204,7 @@ public final class PlayersPanel extends McPanel {
         if (hasReason && reasonPrompt != null) {
             reason = JOptionPane.showInputDialog(this, reasonPrompt);
             if (reason == null) return;
+            reason = reason.replaceAll("[\\r\\n]+", " ").trim();
         }
 
         String fullCmd = command + " " + selected;

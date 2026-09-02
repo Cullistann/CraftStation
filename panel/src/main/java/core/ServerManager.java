@@ -226,8 +226,28 @@ public final class ServerManager implements IServerManager {
         }
     }
 
+    /**
+     * Sanitizes a command string by trimming whitespace and removing newline characters
+     * to prevent newline/subcommand injection into the server console.
+     *
+     * @param command Raw command input
+     * @return Sanitized command string, or null if command is null or blank
+     */
+    public static String sanitizeCommand(String command) {
+        if (command == null) {
+            return null;
+        }
+        String sanitized = command.replaceAll("[\\r\\n]+", " ").trim();
+        return sanitized.isEmpty() ? null : sanitized;
+    }
+
     @Override
     public void sendCommand(String command) {
+        String sanitized = sanitizeCommand(command);
+        if (sanitized == null) {
+            return;
+        }
+
         BufferedWriter bw = stdin;
         Process p = process;
         if (bw == null || p == null || !p.isAlive()) {
@@ -235,7 +255,7 @@ public final class ServerManager implements IServerManager {
         }
 
         try {
-            bw.write(command);
+            bw.write(sanitized);
             bw.newLine();
             bw.flush();
         } catch (IOException e) {

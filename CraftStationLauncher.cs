@@ -20,7 +20,7 @@ class CraftStationLauncher {
 
             ProcessStartInfo psi = new ProcessStartInfo();
             psi.FileName = javaExe;
-            psi.Arguments = "--enable-preview -cp \"out;lib\\*\" Main";
+            psi.Arguments = "-cp \"out;lib\\*\" Main";
             psi.WorkingDirectory = panelDir;
             psi.UseShellExecute = false;
             psi.CreateNoWindow = true;

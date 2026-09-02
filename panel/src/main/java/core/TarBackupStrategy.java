@@ -223,9 +223,13 @@ public class TarBackupStrategy implements IBackupStrategy {
         return useGzip;
     }
 
-    // Private helper methods
+    // Package-private helper methods for testability and archive operations
 
-    private void createTarArchive(String serverDir, List<Path> files, OutputStream output) throws IOException {
+    InputStream openInputStream(Path file) throws IOException {
+        return Files.newInputStream(file);
+    }
+
+    void createTarArchive(String serverDir, List<Path> files, OutputStream output) throws IOException {
         // Simplified TAR creation - in a real implementation, you would use a TAR
         // library
         // or implement proper TAR header format
@@ -246,14 +250,23 @@ public class TarBackupStrategy implements IBackupStrategy {
             dos.writeLong(fileSize);
 
             // C5 fix: Files.copy dosya büyürse stream desenkronize ediyordu
-            // Tam fileSize kadar byte kopyala
-            try (InputStream fis = Files.newInputStream(file)) {
+            // Tam fileSize kadar byte kopyala; erken biterse kalan miktarı zero-pad ile doldur
+            try (InputStream fis = openInputStream(file)) {
                 byte[] buffer = new byte[8192];
                 long remaining = fileSize;
                 while (remaining > 0) {
                     int toRead = (int) Math.min(buffer.length, remaining);
                     int bytesRead = fis.read(buffer, 0, toRead);
-                    if (bytesRead == -1) break;
+                    if (bytesRead == -1) {
+                        // Dosya diskte küçüldüyse akış hizalamasını korumak için zero-pad bas
+                        byte[] zeroPad = new byte[8192];
+                        while (remaining > 0) {
+                            int padSize = (int) Math.min(zeroPad.length, remaining);
+                            dos.write(zeroPad, 0, padSize);
+                            remaining -= padSize;
+                        }
+                        break;
+                    }
                     dos.write(buffer, 0, bytesRead);
                     remaining -= bytesRead;
                 }
@@ -263,7 +276,7 @@ public class TarBackupStrategy implements IBackupStrategy {
         dos.flush();
     }
 
-    private void extractTarArchive(Path tarFile, Path targetDir) throws IOException {
+    void extractTarArchive(Path tarFile, Path targetDir) throws IOException {
         // Simplified TAR extraction
         try (InputStream is = Files.newInputStream(tarFile);
                 InputStream tarStream = tarFile.toString().endsWith(".csbak.gz") ? new java.util.zip.GZIPInputStream(is) : is;
